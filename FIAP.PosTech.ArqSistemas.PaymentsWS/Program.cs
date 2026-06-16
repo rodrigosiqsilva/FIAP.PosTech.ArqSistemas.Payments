@@ -1,7 +1,13 @@
 using FIAP.PosTech.ArqSistemas.PaymentsWS;
+using FIAP.PosTech.ArqSistemas.PaymentsWS.Workers;
 
 var builder = Host.CreateApplicationBuilder(args);
-builder.Services.AddHostedService<Worker>();
+
+builder.Services.AddHostedService<KafkaConsumerWorker>();
+
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json")
+    .Build();
 
 var host = builder.Build();
 host.Run();
