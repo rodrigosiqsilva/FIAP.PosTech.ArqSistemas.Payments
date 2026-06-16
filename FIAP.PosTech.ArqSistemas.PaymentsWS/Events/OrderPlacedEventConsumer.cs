@@ -1,22 +1,27 @@
 ﻿using Confluent.Kafka;
-using FIAP.PosTech.ArqSistemas.PaymentsWS.DTOs;
+using FIAP.PosTech.ArqSistemas.PaymentsWS.Models;
+using FIAP.PosTech.ArqSistemas.PaymentsWS.Services;
 using System.Text.Json;
 
 namespace FIAP.PosTech.ArqSistemas.PaymentsWS.Events
 {
-    public record OrderPlacedEventCreated(OrderDto Order, DateTime CreatedAt, string? CorrelationId);
+    public record OrderPlacedEventCreated(Order Order, DateTime CreatedAt, string? CorrelationId);
 
     public class OrderPlacedEventConsumer : IDisposable
     {
         private readonly IConsumer<string, string> _consumer;
         private readonly string _topicName;
         private readonly IConfiguration _configuration;
+        private readonly IPaymentProcessedNotificationService _paymentProcessedNotificationService;
+
+
 
         // Adicionamos IConfiguration no construtor
         public OrderPlacedEventConsumer(string bootstrapServers, string topicName, string groupId, IConfiguration configuration)
         {
             _topicName = topicName;
             _configuration = configuration;
+            _paymentProcessedNotificationService = new PaymentProcessedNotificationService(configuration);
 
             var config = new ConsumerConfig
             {
@@ -62,6 +67,9 @@ namespace FIAP.PosTech.ArqSistemas.PaymentsWS.Events
                                     Console.WriteLine($"[Kafka] Novo pedido recebido! ID: {orderId} | Nome: {nome} | E-mail: {emailUsuario}");
 
                                     orderEvent.Order.Status = Enums.OrderStatus.Approved;
+
+
+                                    _paymentProcessedNotificationService.SendNotificationPaymentProcessed(orderEvent.Order);
 
                                 }
                             }

@@ -1,11 +1,9 @@
 ﻿using FIAP.PosTech.ArqSistemas.PaymentsWS.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace FIAP.PosTech.ArqSistemas.PaymentsWS.DTOs
+
+namespace FIAP.PosTech.ArqSistemas.PaymentsWS.Models
 {
-    public class OrderDto
+    public class Order
     {
         public int Id { get; set; }
         public int IdUser { get; set; }
@@ -14,6 +12,6 @@ namespace FIAP.PosTech.ArqSistemas.PaymentsWS.DTOs
         public string Game { get; set; }
         public decimal Preco { get; set; }
         public string EmailUser { get; set; }
-        public OrderStatus Status { get; set; } = OrderStatus.Rejected;
+        public OrderStatus Status { get; set; }
     }
 }
