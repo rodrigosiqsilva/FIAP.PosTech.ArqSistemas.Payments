@@ -10,11 +10,10 @@ namespace FIAP.PosTech.ArqSistemas.PaymentsWS.Workers
         public KafkaConsumerWorker(IConfiguration configuration)
         {
             var bootstrapServers = configuration["KafkaConfig:BootstrapServers"];
-            var topicNameUserCreated = configuration["KafkaConfig:TopicNameUserCreated"];
             var topicNamePaymentProcessed = configuration["KafkaConfig:TopicNameOrderPlaced"];
             var groupId = configuration["KafkaConfig:GroupId"];
 
-            _consumerOrderPlaced = new OrderPlacedEventConsumer(bootstrapServers, topicNameUserCreated, groupId, configuration);
+            _consumerOrderPlaced = new OrderPlacedEventConsumer(bootstrapServers, topicNamePaymentProcessed, groupId, configuration);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
