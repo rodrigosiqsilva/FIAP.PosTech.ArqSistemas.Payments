@@ -8,6 +8,6 @@ namespace FIAP.PosTech.ArqSistemas.PaymentsWS.Services
     {
         Task<ApiResponse<OrderDto>> GetOrderAsync(int orderId);
 
-        Task<(bool Sucesso, string Mensagem, Order Order)> AlterarStatusAsync(int id, OrderStatus newState);
+        Task<ApiResponse<OrderDto>> AlterarStatusAsync(OrderDto order, OrderStatus newState);
     }
 }

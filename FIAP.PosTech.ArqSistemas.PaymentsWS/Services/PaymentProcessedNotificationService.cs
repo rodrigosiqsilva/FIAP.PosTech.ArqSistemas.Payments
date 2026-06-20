@@ -1,5 +1,5 @@
 ﻿using FIAP.PosTech.ArqSistemas.PaymentsWS.Events;
-using FIAP.PosTech.ArqSistemas.PaymentsWS.Models;
+using FIAP.PosTech.ArqSistemas.PaymentsWS.DTOs;
 
 namespace FIAP.PosTech.ArqSistemas.PaymentsWS.Services
 {
@@ -13,7 +13,7 @@ namespace FIAP.PosTech.ArqSistemas.PaymentsWS.Services
             _configuration = configuration;
         }
 
-        public async Task SendNotificationPaymentProcessed(Order order)
+        public async Task SendNotificationPaymentProcessed(OrderDto order)
         {
             string bootstrapServers = _configuration["KafkaConfig:BootstrapServers"];
             string topicName = _configuration["KafkaConfig:TopicNamePaymentProcessed"];

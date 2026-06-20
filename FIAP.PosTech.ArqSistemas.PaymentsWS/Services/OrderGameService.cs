@@ -22,10 +22,10 @@ namespace FIAP.PosTech.ArqSistemas.PaymentsWS.Services
             _orderEndpoint = _configuration["ApiSettings:OrderEndpoint"];
         }
 
-        public async Task<(bool Sucesso, string Mensagem, Order Order)> AlterarStatusAsync(int id, OrderStatus newState)
+        public async Task<ApiResponse<OrderDto>> AlterarStatusAsync(OrderDto order, OrderStatus newState)
         {
             // Alterar Status do Pedido 
-            var orderUrl = $"{_baseUrl}{_orderEndpoint}{id}?newState={(int)newState}";
+            var orderUrl = $"{_baseUrl}{_orderEndpoint}{order.Id}?newState={(int)newState}";
 
             // Utilizamos HttpRequestMessage para injetar o header de forma segura para esta requisição específica
             using var requestMessage = new HttpRequestMessage(HttpMethod.Put, orderUrl);
@@ -35,36 +35,29 @@ namespace FIAP.PosTech.ArqSistemas.PaymentsWS.Services
             // Verifica se o pedido não foi encontrado
             if (orderResponse.StatusCode == HttpStatusCode.NotFound)
             {
-                return (false, "Pedido não encontrado.", null);
+                return ApiResponse<OrderDto>.NotFound("Pedido não encontrado.");
             }
 
             // Garante que a requisição teve sucesso (2xx) antes de prosseguir
             orderResponse.EnsureSuccessStatusCode();
 
-            // 1. Deserializa o JSON para o formato que a API responde (ApiResponse contendo OrderDto)
-            var apiResponse = await orderResponse.Content.ReadFromJsonAsync<ApiResponse<OrderDto>>();
+            var apiResponse = await orderResponse.Content.ReadFromJsonAsync<ApiResponse<Order>>();
 
             if (apiResponse != null && apiResponse.Sucesso && apiResponse.Dados != null)
             {
-                // 2. Mapeia o OrderDto/Dados vindo da API para o objeto de domínio Order esperado no retorno
-                var order = new Order
-                {
-                    Id = apiResponse.Dados.Id,
-                    IdUser = apiResponse.Dados.IdUser,
-                    Usuario = apiResponse.Dados.Usuario,
-                    IdGame = apiResponse.Dados.IdGame,
-                    Game = apiResponse.Dados.Game,
-                    Preco = apiResponse.Dados.Preco,
-                    EmailUser = apiResponse.Dados.EmailUser,
-                    Status = apiResponse.Dados.Status
-                };
-
-                return (true, apiResponse.Mensagem ?? "Status do pedido alterado com sucesso.", order);
+                 return ApiResponse<OrderDto>.SucessoOk(order, apiResponse.Mensagem ?? "Status do pedido alterado com sucesso.");
             }
 
             // Caso a API responda 200 OK mas com flag de sucesso falso ou corpo vazio
             var erroMensagem = apiResponse?.Mensagem ?? "Erro desconhecido ao alterar status do pedido.";
-            return (false, erroMensagem, null);
+
+            // Se a API original mandou uma lista de erros, podemos repassá-la, senão usamos o erro único
+            if (apiResponse?.ListaErros?.Count > 0)
+            {
+                return ApiResponse<OrderDto>.Erros(apiResponse.ListaErros, erroMensagem);
+            }
+
+            return ApiResponse<OrderDto>.Erro(erroMensagem, erroMensagem);
         }
 
         public async Task<ApiResponse<OrderDto>> GetOrderAsync(int orderId)

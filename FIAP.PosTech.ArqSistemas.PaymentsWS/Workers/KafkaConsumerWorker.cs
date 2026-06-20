@@ -6,19 +6,23 @@ namespace FIAP.PosTech.ArqSistemas.PaymentsWS.Workers
     public class KafkaConsumerWorker : BackgroundService
     {
         private readonly OrderPlacedEventConsumer _consumerOrderPlaced;
+        private readonly PaymentProcessedEventPublisher _eventPublisher;
 
         public KafkaConsumerWorker(IConfiguration configuration, IServiceProvider serviceProvider)
         {
             var bootstrapServers = configuration["KafkaConfig:BootstrapServers"];
-            var topicNamePaymentProcessed = configuration["KafkaConfig:TopicNameOrderPlaced"];
+            var topicNamePaymentProcessed = configuration["KafkaConfig:TopicNamePaymentProcessed"];
+            var topicNameOrderPlaced = configuration["KafkaConfig:TopicNameOrderPlaced"];
             var groupId = configuration["KafkaConfig:GroupId"];
 
+            _eventPublisher = new PaymentProcessedEventPublisher(bootstrapServers, topicNamePaymentProcessed);
             _consumerOrderPlaced = new OrderPlacedEventConsumer(
                 bootstrapServers,
-                topicNamePaymentProcessed,
+                topicNameOrderPlaced,
                 groupId,
                 configuration,
-                serviceProvider); 
+                serviceProvider,
+                _eventPublisher); 
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

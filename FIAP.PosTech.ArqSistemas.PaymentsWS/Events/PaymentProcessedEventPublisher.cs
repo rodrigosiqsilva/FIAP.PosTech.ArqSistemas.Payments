@@ -1,10 +1,10 @@
 ﻿using Confluent.Kafka;
 using System.Text.Json;
-using FIAP.PosTech.ArqSistemas.PaymentsWS.Models;
+using FIAP.PosTech.ArqSistemas.PaymentsWS.DTOs;
 
 namespace FIAP.PosTech.ArqSistemas.PaymentsWS.Events
 {
-    public record PaymentProcessedCreatedEvent(Order Order, DateTime CreatedAt);
+    public record PaymentProcessedCreatedEvent(OrderDto Order, DateTime CreatedAt);
 
     public class PaymentProcessedEventPublisher : IDisposable
     {
