@@ -13,13 +13,12 @@ namespace FIAP.PosTech.ArqSistemas.PaymentsWS.Workers
             var topicNamePaymentProcessed = configuration["KafkaConfig:TopicNameOrderPlaced"];
             var groupId = configuration["KafkaConfig:GroupId"];
 
-            // PASSAMOS O serviceProvider EM VEZ DO SERVIÇO DIRETO
             _consumerOrderPlaced = new OrderPlacedEventConsumer(
                 bootstrapServers,
                 topicNamePaymentProcessed,
                 groupId,
                 configuration,
-                serviceProvider); // <-- Alterado aqui
+                serviceProvider); 
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
