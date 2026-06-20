@@ -1,98 +1,65 @@
-﻿using Confluent.Kafka;
-using FIAP.PosTech.ArqSistemas.PaymentsWS.Models;
+﻿using Confluent.Kafka; 
 using FIAP.PosTech.ArqSistemas.PaymentsWS.Services;
-using System.Text.Json;
 
 namespace FIAP.PosTech.ArqSistemas.PaymentsWS.Events
 {
-    public record OrderPlacedEventCreated(Order Order, DateTime CreatedAt, string? CorrelationId);
-
     public class OrderPlacedEventConsumer : IDisposable
     {
-        private readonly IConsumer<string, string> _consumer;
-        private readonly string _topicName;
-        private readonly IConfiguration _configuration;
-        private readonly IPaymentProcessedNotificationService _paymentProcessedNotificationService;
+        private readonly IConsumer<Ignore, string> _consumer;
+        private readonly IServiceProvider _serviceProvider; 
 
-
-
-        // Adicionamos IConfiguration no construtor
-        public OrderPlacedEventConsumer(string bootstrapServers, string topicName, string groupId, IConfiguration configuration)
+        public OrderPlacedEventConsumer(
+            string bootstrapServers,
+            string topic,
+            string groupId,
+            IConfiguration configuration,
+            IServiceProvider serviceProvider) 
         {
-            _topicName = topicName;
-            _configuration = configuration;
-            _paymentProcessedNotificationService = new PaymentProcessedNotificationService(configuration);
+            _serviceProvider = serviceProvider;
 
             var config = new ConsumerConfig
             {
                 BootstrapServers = bootstrapServers,
                 GroupId = groupId,
-                AutoOffsetReset = AutoOffsetReset.Earliest,
-                EnableAutoCommit = true
+                AutoOffsetReset = AutoOffsetReset.Earliest
             };
 
-            _consumer = new ConsumerBuilder<string, string>(config).Build();
+            _consumer = new ConsumerBuilder<Ignore, string>(config).Build();
+            _consumer.Subscribe(topic);
         }
 
-        public Task StartConsumingAsync(CancellationToken cancellationToken)
+        public async Task StartConsumingAsync(CancellationToken stoppingToken)
         {
-            _consumer.Subscribe(_topicName);
-
-            // Marcamos a Action como async para podermos usar o "await" lá embaixo no EmailService
-            return Task.Run(async () =>
+            while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    while (!cancellationToken.IsCancellationRequested)
+                    var consumeResult = _consumer.Consume(stoppingToken);
+                    if (consumeResult != null)
                     {
-                        try
-                        {
-                            var consumeResult = _consumer.Consume(cancellationToken);
+                        using var scope = _serviceProvider.CreateScope();
 
-                            if (consumeResult != null)
-                            {
-                                var options = new JsonSerializerOptions
-                                {
-                                    PropertyNameCaseInsensitive = true
-                                };
+                        var orderGameService = scope.ServiceProvider.GetRequiredService<IOrderGameService>();
 
-                                var orderEvent = JsonSerializer.Deserialize<OrderPlacedEventCreated>(consumeResult.Message.Value, options);
-
-                                if (orderEvent != null && orderEvent.Order != null)
-                                {
-                                    int orderId = orderEvent.Order.Id;
-                                    string nome = orderEvent.Order.Usuario;
-                                    string emailUsuario = orderEvent.Order.EmailUser;
-
-                                    Console.WriteLine($"[Kafka] Novo pedido recebido! ID: {orderId} | Nome: {nome} | E-mail: {emailUsuario}");
-
-                                    orderEvent.Order.Status = Enums.OrderStatus.Approved;
-
-
-                                    _paymentProcessedNotificationService.SendNotificationPaymentProcessed(orderEvent.Order);
-
-                                }
-                            }
-                        }
-                        catch (ConsumeException e)
-                        {
-                            Console.WriteLine($"[Kafka Consumer] Erro ao consumir mensagem: {e.Error.Reason}");
-                        }
+                        await ProcessarMensagemAsync(consumeResult.Message.Value, orderGameService);
                     }
                 }
-                catch (OperationCanceledException)
+                catch (Exception ex)
                 {
-                    Console.WriteLine("[Kafka Consumer] Encerramento solicitado.");
+                    Console.WriteLine($"Erro ao consumir mensagem: {ex.Message}");
                 }
-                finally
-                {
-                    _consumer.Close();
-                }
-            }, cancellationToken);
+            }
+        }
+
+        private async Task ProcessarMensagemAsync(string messageJson, IOrderGameService orderGameService)
+        {
+            Console.WriteLine($"Processando mensagem com um escopo exclusivo!");
+            await Task.CompletedTask;
         }
 
         public void Dispose()
         {
+            _consumer?.Close();
             _consumer?.Dispose();
         }
     }
