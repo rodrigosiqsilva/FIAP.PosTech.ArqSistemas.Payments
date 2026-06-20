@@ -1,0 +1,35 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fiap-payments-ws-deployment
+  labels:
+    app: fiap-payments-ws
+spec:
+  replicas: 1 # Inicializa com 1 réplica. Ajuste conforme a necessidade de paralelismo da sua fila.
+  selector:
+    matchLabels:
+      app: fiap-payments-ws
+  template:
+    metadata:
+      labels:
+        app: fiap-payments-ws
+    spec:
+      containers:
+      - name: fiap-payments-ws
+        image: rodrigosiqsilva/fiap-payments-ws:latest 
+        imagePullPolicy: IfNotPresent
+        resources:
+          # Recursos recomendados para um worker do .NET rodando tarefas de negócio
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "300m"
+        env:
+        - name: DOTNET_ENVIRONMENT
+          value: "Production"
+        # Workers de pagamentos geralmente precisam se conectar a gateways ou bancos.
+        # Caso precise, você pode configurar as chaves/strings de conexão aqui:
+        #- name: ConnectionStrings__DefaultConnection
+        #  value: "Sua_String_Aqui"
