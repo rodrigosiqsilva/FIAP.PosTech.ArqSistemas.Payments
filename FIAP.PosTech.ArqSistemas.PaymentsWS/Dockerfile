@@ -10,10 +10,10 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["FIAP.PosTech.ArqSistemas.PaymentsWS/FIAP.PosTech.ArqSistemas.PaymentsWS.csproj", "FIAP.PosTech.ArqSistemas.PaymentsWS/"]
-RUN dotnet restore "./FIAP.PosTech.ArqSistemas.PaymentsWS/FIAP.PosTech.ArqSistemas.PaymentsWS.csproj"
+COPY ["FIAP.PosTech.ArqSistemas.Payments/FIAP.PosTech.ArqSistemas.PaymentsWS/FIAP.PosTech.ArqSistemas.PaymentsWS.csproj", "FIAP.PosTech.ArqSistemas.Payments/FIAP.PosTech.ArqSistemas.PaymentsWS/"]
+RUN dotnet restore "./FIAP.PosTech.ArqSistemas.Payments/FIAP.PosTech.ArqSistemas.PaymentsWS/FIAP.PosTech.ArqSistemas.PaymentsWS.csproj"
 COPY . .
-WORKDIR "/src/FIAP.PosTech.ArqSistemas.PaymentsWS"
+WORKDIR "/src/FIAP.PosTech.ArqSistemas.Payments/FIAP.PosTech.ArqSistemas.PaymentsWS"
 RUN dotnet build "./FIAP.PosTech.ArqSistemas.PaymentsWS.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
